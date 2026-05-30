@@ -53,7 +53,7 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">College Email</label>
             <input
               type="email"
-              placeholder="you@srmist.edu.in"
+              placeholder="you@msrit.edu.in"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
