@@ -60,17 +60,17 @@ export default function FeedPage() {
           <h1 className="text-lg font-bold text-gray-800">CampusBase</h1>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => router.push('/listings/new')}
-              className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700 transition"
-            >
-              + Sell
-            </button>
-            <button
-              onClick={() => router.push('/my-listings')}
-               className="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200 transition"
-              >
-               My Listings
-          </button>
+  onClick={() => router.push('/listings/new')}
+  className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700 transition"
+>
+  + Sell
+</button>
+<button
+  onClick={() => router.push('/my-listings')}
+  className="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200 transition"
+>
+  My Listings
+</button>
 <button
   onClick={() => router.push('/messages')}
   className="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200 transition"
