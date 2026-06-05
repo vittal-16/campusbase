@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+
 // Fee calculation function based on price
 function calculateListingFee(priceStr: string): number {
   const price = parseFloat(priceStr)
@@ -11,6 +12,7 @@ function calculateListingFee(priceStr: string): number {
   if (price <= 500) return 5       // ₹100 - ₹500: ₹5
   return 10                         // Above ₹500: ₹10
 }
+
 export default function NewListingPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -26,6 +28,7 @@ export default function NewListingPage() {
   const [error, setError] = useState('')
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   useEffect(() => {
     async function fetchCategories() {
@@ -86,10 +89,17 @@ export default function NewListingPage() {
       setError('Please select a category.')
       return
     }
-if (imageUrls.length === 0) {
-  setError('Please upload at least one photo.')
-  return
-}
+
+    if (imageUrls.length === 0) {
+      setError('Please upload at least one photo.')
+      return
+    }
+
+    if (!agreedToTerms) {
+      setError('Please agree to the terms before submitting.')
+      return
+    }
+
     setLoading(true)
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -100,7 +110,7 @@ if (imageUrls.length === 0) {
       return
     }
 
-   const listingFee = calculateListingFee(price)
+    const listingFee = calculateListingFee(price)
 
     const { error: insertError } = await supabase
       .from('listings')
@@ -221,21 +231,6 @@ if (imageUrls.length === 0) {
             </select>
           </div>
 
-          {selectedTier && (
-            <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-              <div>
-                <p className="text-sm font-semibold text-blue-700">Tier {selectedTier} Item</p>
-                <p className="text-xs text-blue-500">
-                  {price !== '' ? (
-                    calculateListingFee(price) === 0
-                    ? '🎉 Free listing — items under ₹100 are free!'
-                    : `Listing fee: ₹${calculateListingFee(price)} (paid before going live)`
-                    ) : 'Enter price to see fee'}
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* Price */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -252,12 +247,51 @@ if (imageUrls.length === 0) {
             />
           </div>
 
+          {/* Fee Display */}
+          {selectedTier && price !== '' && (
+            <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-blue-700">
+                  {calculateListingFee(price) === 0 ? '🎉 Free Listing!' : '💳 Listing Fee'}
+                </p>
+                <p className="text-xs text-blue-600">
+                  {calculateListingFee(price) === 0
+                    ? 'Items under ₹100 are free to list'
+                    : `₹${calculateListingFee(price)} to go live`}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Non-Refundable Disclaimer */}
+          {calculateListingFee(price) > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+              <p className="text-sm font-semibold text-red-700">⚠️ Important</p>
+              <p className="text-sm text-red-600">
+                Listing fees are <strong>NON-REFUNDABLE</strong>. If you delete this listing after payment, your fee will <strong>NOT</strong> be returned. Please make sure your item details are correct before submitting.
+              </p>
+              
+              {/* Checkbox */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={e => setAgreedToTerms(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">
+                  I understand that listing fees are non-refundable
+                </span>
+              </label>
+            </div>
+          )}
+
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
             type="submit"
-            disabled={loading || uploading}
-            className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
+            disabled={loading || uploading || (calculateListingFee(price) > 0 && !agreedToTerms)}
+            className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? 'Saving...' : uploading ? 'Uploading images...' : 'Submit Listing →'}
           </button>
