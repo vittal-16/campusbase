@@ -15,6 +15,10 @@ export default function ListingDetailsPage({ params }: { params: Promise<{ id: s
   const [loading, setLoading] = useState(true)
   const [paying, setPaying] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+  const [feedbackRating, setFeedbackRating] = useState(5)
+  const [feedbackComment, setFeedbackComment] = useState('')
+  const [submittingFeedback, setSubmittingFeedback] = useState(false)
   const [existingPurchase, setExistingPurchase] = useState<any>(null)
   const [checkingPurchase, setCheckingPurchase] = useState(false)
 
@@ -66,6 +70,64 @@ export default function ListingDetailsPage({ params }: { params: Promise<{ id: s
     setCheckingPurchase(false)
   }
 
+  async function submitFeedback() {
+    if (!currentUser || !existingPurchase) return
+    
+    setSubmittingFeedback(true)
+    try {
+      // Save feedback/review
+      const { error: reviewError } = await supabase
+        .from('reviews')
+        .insert({
+          purchase_id: existingPurchase.id,
+          rating: feedbackRating,
+          feedback: feedbackComment,
+        })
+
+      if (reviewError) throw reviewError
+
+      alert('Thank you for your feedback!')
+      setShowFeedbackModal(false)
+      // Refresh page to show "I Bought" button
+      fetchListing()
+    } catch (error) {
+      console.error(error)
+      alert('Error saving feedback. Please try again.')
+    }
+    setSubmittingFeedback(false)
+  }
+
+  async function handleIBought() {
+    if (!existingPurchase) return
+    
+    const confirmDelete = confirm('Are you sure you bought this item? This will delete the listing.')
+    if (!confirmDelete) return
+
+    setPaying(true)
+    try {
+      // Delete the listing
+      const { error: deleteError } = await supabase
+        .from('listings')
+        .delete()
+        .eq('id', id)
+
+      if (deleteError) throw deleteError
+
+      // Update purchase status to completed
+      await supabase
+        .from('purchases')
+        .update({ status: 'completed' })
+        .eq('id', existingPurchase.id)
+
+      alert('Transaction completed! Listing deleted.')
+      router.push('/feed')
+    } catch (error) {
+      console.error(error)
+      alert('Error deleting listing. Please try again.')
+    }
+    setPaying(false)
+  }
+
   async function handleOfflinePayment() {
     if (!currentUser || !seller) return
     
@@ -104,9 +166,9 @@ export default function ListingDetailsPage({ params }: { params: Promise<{ id: s
         .update({ status: 'sold' })
         .eq('id', id)
 
-      alert('Message sent to seller! They will contact you to arrange payment.')
+      setExistingPurchase(purchase)
       setShowPaymentModal(false)
-      router.push('/messages')
+      setShowFeedbackModal(true)
     } catch (error) {
       console.error(error)
       alert('Error initiating purchase. Please try again.')
@@ -124,7 +186,7 @@ export default function ListingDetailsPage({ params }: { params: Promise<{ id: s
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: listing.price, // Item price, not listing fee
+          amount: listing.price,
           listingId: listing.id,
           buyerId: currentUser.id,
         }),
@@ -142,7 +204,7 @@ export default function ListingDetailsPage({ params }: { params: Promise<{ id: s
         handler: async function (response: any) {
           try {
             // Create purchase record
-            const { error: purchaseError } = await supabase
+            const { data: purchase, error: purchaseError } = await supabase
               .from('purchases')
               .insert({
                 listing_id: id,
@@ -151,6 +213,8 @@ export default function ListingDetailsPage({ params }: { params: Promise<{ id: s
                 payment_method: 'online',
                 status: 'completed',
               })
+              .select()
+              .single()
 
             if (purchaseError) throw purchaseError
 
@@ -172,9 +236,9 @@ export default function ListingDetailsPage({ params }: { params: Promise<{ id: s
               .update({ status: 'sold' })
               .eq('id', id)
 
-            alert('Payment successful! Seller will contact you soon.')
+            setExistingPurchase(purchase)
             setShowPaymentModal(false)
-            router.push('/messages')
+            setShowFeedbackModal(true)
           } catch (error) {
             console.error(error)
             alert('Payment recorded but error sending notification. Please contact seller.')
@@ -337,6 +401,14 @@ export default function ListingDetailsPage({ params }: { params: Promise<{ id: s
               >
                 🛒 Buy Now
               </button>
+            ) : existingPurchase && listing.status === 'sold' ? (
+              <button
+                onClick={handleIBought}
+                disabled={paying}
+                className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-green-700 disabled:opacity-50 transition"
+              >
+                {paying ? 'Processing...' : '✅ I Bought This'}
+              </button>
             ) : listing.status === 'sold' ? (
               <div className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl text-center text-sm font-semibold">
                 ❌ Already Sold
@@ -354,7 +426,7 @@ export default function ListingDetailsPage({ params }: { params: Promise<{ id: s
 
         {currentUser && currentUser.id === listing.seller_id && (
           <div>
-            {listing.status === 'pending_payment' ? (
+            {listing.status === 'pending_payment' && listing.listing_fee > 0 ? (
               <button
                 onClick={handlePayment}
                 disabled={paying}
@@ -404,6 +476,59 @@ export default function ListingDetailsPage({ params }: { params: Promise<{ id: s
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4">
+            <h2 className="text-xl font-bold text-gray-800">Rate this Item</h2>
+            <p className="text-sm text-gray-600">How was your experience with {listing.title}?</p>
+            
+            {/* Rating Stars */}
+            <div className="flex justify-center gap-2">
+              {[1, 2, 3, 4, 5].map(star => (
+                <button
+                  key={star}
+                  onClick={() => setFeedbackRating(star)}
+                  className={`text-3xl transition ${
+                    star <= feedbackRating ? 'text-yellow-400' : 'text-gray-300'
+                  }`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+
+            {/* Comment */}
+            <textarea
+              value={feedbackComment}
+              onChange={e => setFeedbackComment(e.target.value)}
+              placeholder="Share your feedback (optional)"
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            {/* Buttons */}
+            <div className="space-y-2">
+              <button
+                onClick={submitFeedback}
+                disabled={submittingFeedback}
+                className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-50 transition"
+              >
+                {submittingFeedback ? 'Submitting...' : 'Submit Feedback'}
+              </button>
+              
+              <button
+                onClick={() => setShowFeedbackModal(false)}
+                disabled={submittingFeedback}
+                className="w-full text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-100 disabled:opacity-50 transition"
+              >
+                Skip for now
+              </button>
+            </div>
           </div>
         </div>
       )}
