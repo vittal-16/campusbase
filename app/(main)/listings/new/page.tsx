@@ -113,7 +113,7 @@ if (imageUrls.length === 0) {
         category_id: categoryId,
         tier: selectedTier,
         listing_fee: listingFee,
-        status: 'pending_payment',
+        status: listingFee === 0 ? 'active' : 'pending_payment',
         image_urls: imageUrls,
       })
 
