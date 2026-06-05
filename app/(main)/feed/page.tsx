@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 export default function FeedPage() {
   const router = useRouter()
   const supabase = createClient()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const [listings, setListings] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
@@ -58,25 +59,27 @@ export default function FeedPage() {
         {/* Top row - Logo and buttons */}
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-lg font-bold text-gray-800">CampusBase</h1>
-          <div className="flex items-center gap-1">
+          
+          {/* Desktop buttons - hidden on mobile */}
+          <div className="hidden md:flex items-center gap-1">
             <button
-  onClick={() => router.push('/listings/new')}
-  className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700 transition"
->
-  + Sell
-</button>
-<button
-  onClick={() => router.push('/my-listings')}
-  className="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200 transition"
->
-  My Listings
-</button>
-<button
-  onClick={() => router.push('/messages')}
-  className="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200 transition"
->
-  Messages
-</button>
+              onClick={() => router.push('/listings/new')}
+              className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700 transition"
+            >
+              + Sell
+            </button>
+            <button
+              onClick={() => router.push('/my-listings')}
+              className="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200 transition"
+            >
+              My Listings
+            </button>
+            <button
+              onClick={() => router.push('/messages')}
+              className="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200 transition"
+            >
+              Messages
+            </button>
             <button
               onClick={() => router.push('/profile')}
               className="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200 transition"
@@ -93,7 +96,70 @@ export default function FeedPage() {
               Logout
             </button>
           </div>
+
+          {/* Mobile menu button - visible only on mobile */}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="md:hidden flex flex-col gap-1"
+          >
+            <span className={`w-6 h-0.5 bg-gray-800 transition ${menuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+            <span className={`w-6 h-0.5 bg-gray-800 transition ${menuOpen ? 'opacity-0' : ''}`}></span>
+            <span className={`w-6 h-0.5 bg-gray-800 transition ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+          </button>
         </div>
+
+        {/* Mobile dropdown menu - visible only on mobile */}
+        {menuOpen && (
+          <div className="md:hidden bg-gray-50 rounded-lg p-2 space-y-1 mb-2">
+            <button
+              onClick={() => {
+                router.push('/listings/new')
+                setMenuOpen(false)
+              }}
+              className="w-full text-left text-sm px-3 py-2 rounded-lg text-gray-800 hover:bg-gray-200 transition"
+            >
+              + Sell
+            </button>
+            <button
+              onClick={() => {
+                router.push('/my-listings')
+                setMenuOpen(false)
+              }}
+              className="w-full text-left text-sm px-3 py-2 rounded-lg text-gray-800 hover:bg-gray-200 transition"
+            >
+              My Listings
+            </button>
+            <button
+              onClick={() => {
+                router.push('/messages')
+                setMenuOpen(false)
+              }}
+              className="w-full text-left text-sm px-3 py-2 rounded-lg text-gray-800 hover:bg-gray-200 transition"
+            >
+              Messages
+            </button>
+            <button
+              onClick={() => {
+                router.push('/profile')
+                setMenuOpen(false)
+              }}
+              className="w-full text-left text-sm px-3 py-2 rounded-lg text-gray-800 hover:bg-gray-200 transition"
+            >
+              Profile
+            </button>
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut()
+                router.push('/login')
+                setMenuOpen(false)
+              }}
+              className="w-full text-left text-sm px-3 py-2 rounded-lg text-gray-800 hover:bg-gray-200 transition"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+
         {/* Search bar - full width */}
         <input
           type="text"
@@ -104,6 +170,7 @@ export default function FeedPage() {
         />
       </div>
 
+      {/* Rest of your code stays the same */}
       {/* Category Filter */}
       <div className="bg-white border-b px-4 py-3">
         <div className="max-w-5xl mx-auto flex gap-2 overflow-x-auto pb-1">
