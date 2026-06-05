@@ -66,10 +66,10 @@ export default function FeedPage() {
               + Sell
             </button>
             <button
-              onClick={() => router.push('/my-listings')}
+              onClick={() => router.push('/messages')}
               className="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200 transition"
             >
-              My Listings
+              Messages
             </button>
             <button
               onClick={() => router.push('/profile')}

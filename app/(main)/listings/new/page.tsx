@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-
-const TIER_FEES: Record<number, number> = {
-  1: 10,
-  2: 15,
-  3: 25,
+// Fee calculation function based on price
+function calculateListingFee(priceStr: string): number {
+  const price = parseFloat(priceStr)
+  if (isNaN(price)) return 0
+  if (price < 100) return 0        // Below ₹100: FREE
+  if (price <= 500) return 5       // ₹100 - ₹500: ₹5
+  return 10                         // Above ₹500: ₹10
 }
-
 export default function NewListingPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -99,7 +100,7 @@ if (imageUrls.length === 0) {
       return
     }
 
-    const listingFee = parseFloat(price) < 100 ? 0 : TIER_FEES[selectedTier]
+   const listingFee = calculateListingFee(price)
 
     const { error: insertError } = await supabase
       .from('listings')
@@ -225,9 +226,11 @@ if (imageUrls.length === 0) {
               <div>
                 <p className="text-sm font-semibold text-blue-700">Tier {selectedTier} Item</p>
                 <p className="text-xs text-blue-500">
-                  {parseFloat(price) < 100 && price !== ''
+                  {price !== '' ? (
+                    calculateListingFee(price) === 0
                     ? '🎉 Free listing — items under ₹100 are free!'
-                    : `Listing fee: ₹${TIER_FEES[selectedTier]} (paid before going live)`}
+                    : `Listing fee: ₹${calculateListingFee(price)} (paid before going live)`
+                    ) : 'Enter price to see fee'}
                 </p>
               </div>
             </div>

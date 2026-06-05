@@ -167,13 +167,13 @@ export default function ListingDetailsPage({ params }: { params: Promise<{ id: s
         )}
 
         {currentUser && currentUser.id !== listing.seller_id && (
-          <button
-            onClick={() => alert('Messaging coming in Phase 7!')}
-            className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition"
-          >
-            💬 Contact Seller
-          </button>
-        )}
+  <button
+    onClick={() => router.push(`/messages/${listing.id}?with=${listing.seller_id}`)}
+    className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition"
+  >
+    💬 Contact Seller
+  </button>
+)}
 
         {currentUser && currentUser.id === listing.seller_id && (
           <div>
