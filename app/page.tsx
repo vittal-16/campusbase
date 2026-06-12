@@ -13,8 +13,8 @@ export default function LandingPage() {
           <h1 className="text-2xl font-bold text-gray-800">CampusBase</h1>
           <button
             onClick={() => router.push('/login')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-          >
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition cursor-pointer"
+            >
             Sign In
           </button>
         </div>
@@ -36,15 +36,15 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-            <button
-              onClick={() => router.push('/signup')}
-              className="bg-blue-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-blue-700 transition text-lg"
-            >
+           <button
+               onClick={() => router.push('/signup')}
+              className="bg-blue-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-blue-700 transition text-lg cursor-pointer"
+              >
               Get Started Free →
-            </button>
+          </button>
             <button
               onClick={() => router.push('/feed')}
-              className="bg-gray-100 text-gray-800 px-8 py-3 rounded-full font-semibold hover:bg-gray-200 transition text-lg"
+              className="bg-gray-100 text-gray-800 px-8 py-3 rounded-full font-semibold hover:bg-gray-200 transition text-lg cursor-pointer"
             >
               Browse Listings
             </button>
